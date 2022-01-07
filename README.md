@@ -22,4 +22,4 @@ Run the application
 streamlit run streamlit_app.py
 ```
 
-View the application in your browser `http://localhost:8501`
+View the application in [your browser](http://localhost:8501)
