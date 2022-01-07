@@ -10,7 +10,7 @@ Clone repository
 git@github.com:lpwieler/substitute-recommender.git
 ```
 
-Install package requirements
+Install packages
 
 ```sh
 pip3 install -r requirements.txt
@@ -22,8 +22,4 @@ Run the application
 streamlit run streamlit_app.py
 ```
 
-View the application in your browser
-
-```sh
-http://localhost:8501
-```
+View the application in your browser `http://localhost:8501`
