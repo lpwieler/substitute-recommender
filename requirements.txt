@@ -1,0 +1,5 @@
+streamlit
+pandas
+numpy
+difflib
+gensim==4.1.2
