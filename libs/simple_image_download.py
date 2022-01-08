@@ -2,7 +2,7 @@ import os
 import time
 import urllib
 import requests
-import magic
+import puremagic
 import progressbar
 from urllib.parse import quote
 
@@ -52,8 +52,7 @@ class simple_image_download:
                 try:
                     r = requests.get(object_raw, allow_redirects=True, timeout=1)
                     if('html' not in str(r.content)):
-                        mime = magic.Magic(mime=True)
-                        file_type = mime.from_buffer(r.content)
+                        file_type = puremagic.from_string(r.content, mime=True)
                         file_extension = f'.{file_type.split("/")[1]}'
                         if file_extension == '.png' and not google_image_seen:
                             google_image_seen = True
@@ -115,8 +114,7 @@ class simple_image_download:
                 try:
                     r = requests.get(object_raw, allow_redirects=True, timeout=1)
                     if('html' not in str(r.content)):
-                        mime = magic.Magic(mime=True)
-                        file_type = mime.from_buffer(r.content)
+                        file_type = puremagic.from_string(r.content, mime=True)
                         file_extension = f'.{file_type.split("/")[1]}'
                         if file_extension not in extensions:
                             raise ValueError()
