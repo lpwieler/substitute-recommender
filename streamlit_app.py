@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 from gensim.models import Word2Vec
 from difflib import get_close_matches
-from simple_image_download import simple_image_download as sid
+from libs.simple_image_download import simple_image_download
 from func_timeout import func_set_timeout, FunctionTimedOut
 
-simple_image = sid.simple_image_download()
+simple_image = simple_image_download()
 
 image_timeout = 3
 default_image = "https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png"
