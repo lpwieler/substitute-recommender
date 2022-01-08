@@ -3,7 +3,13 @@ import pandas as pd
 import numpy as np
 from gensim.models import Word2Vec
 from difflib import get_close_matches
+from simple_image_download import simple_image_download as sid
+from func_timeout import func_set_timeout, FunctionTimedOut
 
+simple_image = sid.simple_image_download()
+
+image_timeout = 3
+default_image = "https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png"
 
 st.title('Substitute Recommender')
 
@@ -14,6 +20,17 @@ def load_model(model='SRM'):
 @st.cache()
 def load_ingredient_list():
     return pd.read_pickle('./data/ingredient_list.pkl')
+
+@func_set_timeout(image_timeout)
+def image_url(ingredient):
+    return simple_image.urls(ingredient, 1, extensions={'.jpg'})[0]
+
+@st.cache()
+def find_image(ingredient):
+    try:
+        return image_url(ingredient)
+    except FunctionTimedOut:
+        return default_image
 
 def remove_same_ingredients(ingredient, substitutes_list, remove_count=3, similarity_score=0.8):
     ingredients_to_remove = get_close_matches(ingredient, substitutes_list, remove_count, similarity_score)
@@ -66,11 +83,32 @@ sort_by = st.sidebar.selectbox('Sort criteria',('score', 'frequency', 'similarit
 suggested_substitutes = st.sidebar.slider('Amount of suggested substitutes',0, 30, 10)
 wv_topn = st.sidebar.slider('Number of top-N similar keys',0, 50, 30)
 
+show_table = st.sidebar.checkbox('Show table', True)
+show_images = st.sidebar.checkbox('Show images', False)
+
 ingredient = st.text_input('Ingredient')
 
 if ingredient:
-    substitutes = find_substitute(ingredient, wv_topn, suggested_substitutes, sort_by)
+    if show_images:
+        st.image(find_image(ingredient), width=150)
+
     st.subheader('Recommended Substitutes')
-    st.table(substitutes)
+    
+    substitutes = find_substitute(ingredient, wv_topn, suggested_substitutes, sort_by)
 
+    if show_table:
+        st.table(substitutes)
 
+    if show_images:
+        progress_bar = st.progress(0)
+        progress_step = round(100 / len(substitutes.index))
+        images = []
+        captions = substitutes['ingredient'].to_list()
+
+        for index, row in substitutes.iterrows():
+            images.append(find_image(row['ingredient']))
+            progress_bar.progress(progress_step * index)
+
+        progress_bar.empty()
+
+        st.image(images, width=100, caption=captions)
