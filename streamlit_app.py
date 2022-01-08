@@ -92,7 +92,7 @@ ingredient = st.text_input('Ingredient')
 if ingredient:
     try:
         substitutes = find_substitute(ingredient, wv_topn, suggested_substitutes, sort_by)
-    except KeyError:
+    except:
         st.warning(f'Invalid ingredient "{ingredient}"')
         st.stop()
 
