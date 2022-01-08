@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import math
 from gensim.models import Word2Vec
 from difflib import get_close_matches
 from libs.simple_image_download import simple_image_download
@@ -106,7 +107,7 @@ if ingredient:
 
     if show_images:
         progress_bar = st.progress(0)
-        progress_step = round(100 / len(substitutes.index))
+        progress_step = math.floor(100 / len(substitutes.index))
         images = []
         captions = substitutes['ingredient'].to_list()
 
