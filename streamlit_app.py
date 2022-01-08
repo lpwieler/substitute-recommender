@@ -23,10 +23,11 @@ def load_ingredient_list():
 
 @func_set_timeout(image_timeout)
 def image_url(ingredient):
+    print(f'Searching image for ingredient "{ingredient}"')
     return simple_image.urls(ingredient, 1, extensions={'.jpg'})[0]
 
 @st.cache()
-def find_image(ingredient):
+def search_image(ingredient):
     try:
         return image_url(ingredient)
     except FunctionTimedOut:
@@ -96,7 +97,7 @@ if ingredient:
         st.stop()
 
     if show_images:
-        st.image(find_image(ingredient), width=150)
+        st.image(search_image(ingredient), width=150)
 
     st.subheader('Recommended Substitutes')
 
@@ -110,7 +111,7 @@ if ingredient:
         captions = substitutes['ingredient'].to_list()
 
         for index, row in substitutes.iterrows():
-            images.append(find_image(row['ingredient']))
+            images.append(search_image(row['ingredient']))
             progress_bar.progress(progress_step * index)
 
         progress_bar.empty()
