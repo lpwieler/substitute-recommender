@@ -89,12 +89,16 @@ show_images = st.sidebar.checkbox('Show images', False)
 ingredient = st.text_input('Ingredient')
 
 if ingredient:
+    try:
+        substitutes = find_substitute(ingredient, wv_topn, suggested_substitutes, sort_by)
+    except KeyError:
+        st.warning(f'Invalid ingredient "{ingredient}"')
+        st.stop()
+
     if show_images:
         st.image(find_image(ingredient), width=150)
 
     st.subheader('Recommended Substitutes')
-    
-    substitutes = find_substitute(ingredient, wv_topn, suggested_substitutes, sort_by)
 
     if show_table:
         st.table(substitutes)
