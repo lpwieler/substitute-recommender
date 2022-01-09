@@ -3,13 +3,13 @@ import pandas as pd
 import numpy as np
 import math
 import os
+import google.auth
 from gensim.models import Word2Vec
 from difflib import get_close_matches
 from libs.simple_image_download import simple_image_download
 from func_timeout import func_set_timeout, FunctionTimedOut
-from googletrans import LANGUAGES, LANGCODES
+from googletrans import Translator, LANGUAGES, LANGCODES
 from google.cloud import translate as google_translate
-import google.auth
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
 
@@ -18,7 +18,19 @@ _, project_id = google.auth.default()
 google_cloud_project = f'projects/{project_id}/locations/global'
 
 simple_image = simple_image_download()
-translator = google_translate.TranslationServiceClient()
+
+translator_provider = os.getenv('GOOGLE_TRANSLATOR_PROVIDER', "cloud")
+
+print(f'Translator is configured to use google {translator_provider} translator')
+
+multi_language_support = False
+
+if translator_provider == "cloud":
+    google_cloud_translator = google_translate.TranslationServiceClient()
+    multi_language_support = True
+elif translator_provider == "free":
+    google_free_translator  = Translator()
+    multi_language_support = True
 
 image_timeout = 3
 default_image = "https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png"
@@ -43,6 +55,22 @@ def search_image(ingredient):
     except FunctionTimedOut:
         return default_image
 
+def translate_word(word, src, dest):
+    if translator_provider == "cloud":
+        return google_cloud_translator.translate_text(
+            request={
+                "parent": google_cloud_project,
+                "contents": [word],
+                "mime_type": "text/plain",
+                "source_language_code": src,
+                "target_language_code": dest
+            }
+        ).translations[0].translated_text
+    elif translator_provider == "free":
+        return google_free_translator.translate(word, dest, src).text
+    else:
+        return word
+
 @st.cache()
 def translate(word, language, mode="to_language"):
     if language == LANGUAGES["en"]:
@@ -59,17 +87,7 @@ def translate(word, language, mode="to_language"):
 
     print(f'Translating word "{word}" from {LANGUAGES[src]} to {LANGUAGES[dest]}...')
 
-    translated_word = translator.translate_text(
-        request={
-            "parent": google_cloud_project,
-            "contents": [word],
-            "mime_type": "text/plain",
-            "source_language_code": src,
-            "target_language_code": dest
-        }
-    ).translations[0].translated_text
-
-    return translated_word
+    return translate_word(word, src, dest)
 
 def get_query_param(key, query_params, default=""):
     return query_params[key][0] if key in query_params else default
@@ -130,7 +148,6 @@ if 'initial_query_params' not in st.session_state:
 initial_query_params = st.session_state['initial_query_params']
 
 default_values = {
-    'language': get_query_param('language', initial_query_params),
     'sort_by': get_query_param('sort_by', initial_query_params),
     'suggested_substitutes': int(get_query_param('suggested_substitutes', initial_query_params, 10)),
     'wv_topn': int(get_query_param('wv_topn', initial_query_params, 30)),
@@ -139,19 +156,25 @@ default_values = {
     'ingredient': get_query_param('ingredient', initial_query_params)
 }
 
+if multi_language_support:
+    default_values['language'] = get_query_param('language', initial_query_params)
+
 ## Sidebar content
 
 # Language
-language_default = default_values['language']
-language_list = [(v) for _, v in LANGUAGES.items()]
-language_index = 21
+if multi_language_support:
+    language_default = default_values['language']
+    language_list = [(v) for _, v in LANGUAGES.items()]
+    language_index = 21
 
-if language_default:
-    if language_default in language_list:
-        language_index = language_list.index(language_default)
+    if language_default:
+        if language_default in language_list:
+            language_index = language_list.index(language_default)
 
-language = st.sidebar.selectbox('', language_list, index=language_index)
-query_params['language'] = language
+    language = st.sidebar.selectbox('', language_list, index=language_index)
+    query_params['language'] = language
+else:
+    language = LANGUAGES["en"]
 
 # Settings
 score_translated = translate('score', language)
