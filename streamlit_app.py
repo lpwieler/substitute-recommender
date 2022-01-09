@@ -122,6 +122,7 @@ query_params = st.experimental_get_query_params()
 
 if 'initial_query_params' not in st.session_state:
     st.session_state['initial_query_params'] = st.experimental_get_query_params()
+    print(f'Initial query params: {st.session_state["initial_query_params"]}')
 
 initial_query_params = st.session_state['initial_query_params']
 
