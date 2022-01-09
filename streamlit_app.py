@@ -168,6 +168,9 @@ if ingredient:
 
     st.subheader(translate('Recommended Substitutes', language))
 
+    if not show_table and not show_images:
+        st.info(translate('All views are disabled. Table or image view needs to be enabled to see results.', language))
+
     if show_table:
         st.table(substitutes)
 
