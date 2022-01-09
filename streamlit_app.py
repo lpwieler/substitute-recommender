@@ -2,14 +2,20 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import math
+import os
 from gensim.models import Word2Vec
 from difflib import get_close_matches
 from libs.simple_image_download import simple_image_download
 from func_timeout import func_set_timeout, FunctionTimedOut
-from googletrans import Translator, LANGUAGES, LANGCODES
+from googletrans import LANGUAGES, LANGCODES
+from google.cloud import translate
+
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
+
+google_cloud_project = "projects/substitute-recommender/locations/global"
 
 simple_image = simple_image_download()
-translator = Translator()
+translator = translate.TranslationServiceClient()
 
 image_timeout = 3
 default_image = "https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png"
@@ -34,7 +40,7 @@ def search_image(ingredient):
     except FunctionTimedOut:
         return default_image
 
-@st.cache(suppress_st_warning=True)
+@st.cache()
 def translate(word, language, mode="to_language"):
     if language == LANGUAGES["en"]:
         return word
@@ -50,11 +56,15 @@ def translate(word, language, mode="to_language"):
 
     print(f'Translating word "{word}" from {LANGUAGES[src]} to {LANGUAGES[dest]}...')
 
-    translated_word = translator.translate(word, dest, src).text
-
-    if translated_word == word:
-        st.error("Translation limit reached. Please switch to english to continue.")
-        st.stop()
+    translated_word = translator.translate_text(
+        request={
+            "parent": google_cloud_project,
+            "contents": [word],
+            "mime_type": "text/plain",
+            "source_language_code": src,
+            "target_language_code": dest
+        }
+    ).translations[0].translated_text
 
     return translated_word
 
