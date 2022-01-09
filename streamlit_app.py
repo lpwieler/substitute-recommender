@@ -9,10 +9,13 @@ from libs.simple_image_download import simple_image_download
 from func_timeout import func_set_timeout, FunctionTimedOut
 from googletrans import LANGUAGES, LANGCODES
 from google.cloud import translate as google_translate
+import google.auth
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
 
-google_cloud_project = "projects/substitute-recommender/locations/global"
+_, project_id = google.auth.default()
+
+google_cloud_project = f'projects/{project_id}/locations/global'
 
 simple_image = simple_image_download()
 translator = google_translate.TranslationServiceClient()
