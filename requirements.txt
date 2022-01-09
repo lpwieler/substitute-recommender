@@ -6,3 +6,4 @@ requests==2.27.1
 puremagic==1.11
 progressbar==2.5
 func_timeout==4.3.5
+googletrans==3.1.0a0

@@ -6,13 +6,13 @@ from gensim.models import Word2Vec
 from difflib import get_close_matches
 from libs.simple_image_download import simple_image_download
 from func_timeout import func_set_timeout, FunctionTimedOut
+from googletrans import Translator, LANGUAGES, LANGCODES
 
 simple_image = simple_image_download()
+translator = Translator()
 
 image_timeout = 3
 default_image = "https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png"
-
-st.title('Substitute Recommender')
 
 @st.cache(allow_output_mutation=True)
 def load_model(model='SRM'):
@@ -24,7 +24,7 @@ def load_ingredient_list():
 
 @func_set_timeout(image_timeout)
 def image_url(ingredient):
-    print(f'Searching image for ingredient "{ingredient}"')
+    print(f'Searching image for ingredient "{ingredient}"...')
     return simple_image.urls(ingredient, 1, extensions={'.jpg'})[0]
 
 @st.cache()
@@ -33,6 +33,30 @@ def search_image(ingredient):
         return image_url(ingredient)
     except FunctionTimedOut:
         return default_image
+
+@st.cache(suppress_st_warning=True)
+def translate(word, language, mode="to_language"):
+    if language == LANGUAGES["en"]:
+        return word
+    
+    if mode == "to_language":
+        dest=LANGCODES[language]
+        src="en"
+    elif mode == "to_english":
+        dest="en"
+        src=LANGCODES[language]
+    else:
+        return word
+
+    print(f'Translating word "{word}" from {LANGUAGES[src]} to {LANGUAGES[dest]}...')
+
+    translated_word = translator.translate(word, dest, src).text
+
+    if translated_word == word:
+        st.error("Translation limit reached. Please switch to english to continue.")
+        st.stop()
+
+    return translated_word
 
 def remove_same_ingredients(ingredient, substitutes_list, remove_count=3, similarity_score=0.8):
     ingredients_to_remove = get_close_matches(ingredient, substitutes_list, remove_count, similarity_score)
@@ -81,26 +105,58 @@ def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='s
 model = load_model()
 ingredient_list = load_ingredient_list()
 
-sort_by = st.sidebar.selectbox('Sort criteria',('score', 'frequency', 'similarity'))
-suggested_substitutes = st.sidebar.slider('Amount of suggested substitutes',0, 30, 10)
-wv_topn = st.sidebar.slider('Number of top-N similar keys',0, 50, 30)
+language = st.sidebar.selectbox('', [(v) for _, v in LANGUAGES.items()], index=21)
 
-show_table = st.sidebar.checkbox('Show table', True)
-show_images = st.sidebar.checkbox('Show images', False)
+score_translated = translate('score', language)
+frequency_translated = translate('frequency', language)
+similarity_translated = translate('similarity', language)
 
-ingredient = st.text_input('Ingredient')
+sorter_mapping = {}
+sorter_mapping[score_translated] = 'score'
+sorter_mapping[frequency_translated] = 'frequency'
+sorter_mapping[similarity_translated] = 'similarity'
+
+sort_key = st.sidebar.selectbox(translate('Sort criteria', language),(score_translated, frequency_translated, similarity_translated))
+sort_by = sorter_mapping[sort_key]
+
+suggested_substitutes = st.sidebar.slider(translate('Amount of suggested substitutes', language), 0, 30, 10)
+wv_topn = st.sidebar.slider(translate('Number of top-N similar keys', language), 0, 50, 30)
+
+show_table = st.sidebar.checkbox(translate('Show table', language), True)
+show_images = st.sidebar.checkbox(translate('Show images', language), False)
+
+st.subheader(translate('Find Ingredient Substitutions', language))
+
+ingredient = st.text_input("", placeholder=translate("Ingredient", language))
 
 if ingredient:
+    ingredient = translate(ingredient, language, mode="to_english")
+
     try:
         substitutes = find_substitute(ingredient, wv_topn, suggested_substitutes, sort_by)
     except:
-        st.warning(f'Invalid ingredient "{ingredient}"')
+        st.warning(translate(f'Invalid ingredient "{ingredient}"', language))
         st.stop()
+
+    substitutes_list = substitutes['ingredient'].to_list()
+
+    if language != LANGUAGES["en"]:
+        substitutes['ingredient'] = substitutes['ingredient'].apply(lambda ingredient: translate(ingredient, language))
+
+        substitutes.rename(
+            columns={
+                'ingredient': translate('ingredient', language),
+                'frequency': translate('frequency', language),
+                'similarity': translate('similarity', language),
+                'score': translate('score', language)
+            },
+            inplace=True
+        )
 
     if show_images:
         st.image(search_image(ingredient), width=150)
 
-    st.subheader('Recommended Substitutes')
+    st.subheader(translate('Recommended Substitutes', language))
 
     if show_table:
         st.table(substitutes)
@@ -109,10 +165,10 @@ if ingredient:
         progress_bar = st.progress(0)
         progress_step = math.floor(100 / len(substitutes.index))
         images = []
-        captions = substitutes['ingredient'].to_list()
+        captions = substitutes[translate('ingredient', language)].to_list()
 
         for index, row in substitutes.iterrows():
-            images.append(search_image(row['ingredient']))
+            images.append(search_image(substitutes_list[index - 1]))
             progress_bar.progress(progress_step * index)
 
         progress_bar.empty()
