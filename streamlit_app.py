@@ -19,16 +19,16 @@ google_cloud_project = f'projects/{project_id}/locations/global'
 
 simple_image = simple_image_download()
 
-translator_provider = os.getenv('GOOGLE_TRANSLATOR_PROVIDER', "cloud")
+google_translator_provider = os.getenv('GOOGLE_TRANSLATOR_PROVIDER', "cloud")
 
-print(f'Google translator provider: {translator_provider}')
+print(f'Google translator provider: {google_translator_provider}')
 
 multi_language_support = False
 
-if translator_provider == "cloud":
+if google_translator_provider == "cloud":
     google_cloud_translator = google_translate.TranslationServiceClient()
     multi_language_support = True
-elif translator_provider == "free":
+elif google_translator_provider == "free":
     google_free_translator  = Translator()
     multi_language_support = True
 
@@ -56,7 +56,7 @@ def search_image(ingredient):
         return default_image
 
 def translate_word(word, src, dest):
-    if translator_provider == "cloud":
+    if google_translator_provider == "cloud":
         return google_cloud_translator.translate_text(
             request={
                 "parent": google_cloud_project,
@@ -66,7 +66,7 @@ def translate_word(word, src, dest):
                 "target_language_code": dest
             }
         ).translations[0].translated_text
-    elif translator_provider == "free":
+    elif google_translator_provider == "free":
         return google_free_translator.translate(word, dest, src).text
     else:
         return word
