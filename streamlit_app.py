@@ -8,14 +8,14 @@ from difflib import get_close_matches
 from libs.simple_image_download import simple_image_download
 from func_timeout import func_set_timeout, FunctionTimedOut
 from googletrans import LANGUAGES, LANGCODES
-from google.cloud import translate
+from google.cloud import translate as google_translate
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
 
 google_cloud_project = "projects/substitute-recommender/locations/global"
 
 simple_image = simple_image_download()
-translator = translate.TranslationServiceClient()
+translator = google_translate.TranslationServiceClient()
 
 image_timeout = 3
 default_image = "https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png"
@@ -68,6 +68,9 @@ def translate(word, language, mode="to_language"):
 
     return translated_word
 
+def get_query_param(key, query_params, default=""):
+    return query_params[key][0] if key in query_params else default
+
 def remove_same_ingredients(ingredient, substitutes_list, remove_count=3, similarity_score=0.8):
     ingredients_to_remove = get_close_matches(ingredient, substitutes_list, remove_count, similarity_score)
     cleaned_substitutes_list = [x for x in substitutes_list if x not in ingredients_to_remove]
@@ -115,8 +118,37 @@ def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='s
 model = load_model()
 ingredient_list = load_ingredient_list()
 
-language = st.sidebar.selectbox('', [(v) for _, v in LANGUAGES.items()], index=21)
+query_params = st.experimental_get_query_params()
 
+if 'initial_query_params' not in st.session_state:
+    st.session_state['initial_query_params'] = query_params
+
+initial_query_params = st.session_state['initial_query_params']
+
+default_values = {
+    'language': get_query_param('language', initial_query_params),
+    'sort_by': get_query_param('sort_by', initial_query_params),
+    'suggested_substitutes': int(get_query_param('suggested_substitutes', initial_query_params, 10)),
+    'wv_topn': int(get_query_param('wv_topn', initial_query_params, 30)),
+    'show_table': get_query_param('show_table', initial_query_params, 'true').lower() == 'true',
+    'show_images': get_query_param('show_images', initial_query_params, 'false').lower() == 'true',
+    'ingredient': get_query_param('ingredient', initial_query_params)
+}
+
+## Sidebar content
+
+# Language
+language_default = default_values['language']
+language_list = [(v) for _, v in LANGUAGES.items()]
+language_index = 21
+
+if language_default:
+    if language_default in language_list:
+        language_index = language_list.index(language_default)
+
+language = st.sidebar.selectbox('', language_list, index=language_index)
+
+# Settings
 score_translated = translate('score', language)
 frequency_translated = translate('frequency', language)
 similarity_translated = translate('similarity', language)
@@ -126,26 +158,38 @@ sorter_mapping[score_translated] = 'score'
 sorter_mapping[frequency_translated] = 'frequency'
 sorter_mapping[similarity_translated] = 'similarity'
 
-sort_key = st.sidebar.selectbox(translate('Sort criteria', language),(score_translated, frequency_translated, similarity_translated))
+sort_by_default = default_values['sort_by']
+sorter_list = list(sorter_mapping.values())
+sorter_index = 0
+
+if sort_by_default:
+    if sort_by_default in sorter_list:
+        sorter_index = sorter_list.index(sort_by_default)
+
+sort_key = st.sidebar.selectbox(translate('Sort criteria', language),(score_translated, frequency_translated, similarity_translated), sorter_index)
 sort_by = sorter_mapping[sort_key]
 
-suggested_substitutes = st.sidebar.slider(translate('Amount of suggested substitutes', language), 0, 30, 10)
-wv_topn = st.sidebar.slider(translate('Number of top-N similar keys', language), 0, 50, 30)
+suggested_substitutes = st.sidebar.slider(translate('Amount of suggested substitutes', language), 0, 30, default_values['suggested_substitutes'])
 
-show_table = st.sidebar.checkbox(translate('Show table', language), True)
-show_images = st.sidebar.checkbox(translate('Show images', language), False)
+wv_topn = st.sidebar.slider(translate('Number of top-N similar keys', language), 0, 50, default_values['wv_topn'])
+
+show_table = st.sidebar.checkbox(translate('Show table', language), default_values['show_table'])
+
+show_images = st.sidebar.checkbox(translate('Show images', language), default_values['show_images'])
+
+## Main page content
 
 st.subheader(translate('Find Ingredient Substitutions', language))
 
-ingredient = st.text_input("", placeholder=translate("Ingredient", language))
+ingredient = st.text_input("", placeholder=translate("Enter Ingredient", language), value=default_values['ingredient'])
 
 if ingredient:
-    ingredient = translate(ingredient, language, mode="to_english")
+    ingredient_english = translate(ingredient, language, mode="to_english")
 
     try:
-        substitutes = find_substitute(ingredient, wv_topn, suggested_substitutes, sort_by)
+        substitutes = find_substitute(ingredient_english, wv_topn, suggested_substitutes, sort_by)
     except:
-        st.warning(translate(f'Invalid ingredient "{ingredient}"', language))
+        st.warning(translate(f'Invalid ingredient "{ingredient_english}"', language))
         st.stop()
 
     substitutes_list = substitutes['ingredient'].to_list()
@@ -164,7 +208,7 @@ if ingredient:
         )
 
     if show_images:
-        st.image(search_image(ingredient), width=150)
+        st.image(search_image(ingredient_english), width=150)
 
     st.subheader(translate('Recommended Substitutes', language))
 
@@ -187,3 +231,13 @@ if ingredient:
         progress_bar.empty()
 
         st.image(images, width=100, caption=captions)
+
+st.experimental_set_query_params(
+    language=language,
+    sort_by=sort_by,
+    suggested_substitutes=suggested_substitutes,
+    wv_topn=wv_topn,
+    show_table=show_table,
+    show_images=show_images,
+    ingredient=ingredient
+)
