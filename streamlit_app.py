@@ -121,7 +121,7 @@ ingredient_list = load_ingredient_list()
 query_params = st.experimental_get_query_params()
 
 if 'initial_query_params' not in st.session_state:
-    st.session_state['initial_query_params'] = query_params
+    st.session_state['initial_query_params'] = st.experimental_get_query_params()
 
 initial_query_params = st.session_state['initial_query_params']
 
@@ -147,6 +147,7 @@ if language_default:
         language_index = language_list.index(language_default)
 
 language = st.sidebar.selectbox('', language_list, index=language_index)
+query_params['language'] = language
 
 # Settings
 score_translated = translate('score', language)
@@ -168,14 +169,19 @@ if sort_by_default:
 
 sort_key = st.sidebar.selectbox(translate('Sort criteria', language),(score_translated, frequency_translated, similarity_translated), sorter_index)
 sort_by = sorter_mapping[sort_key]
+query_params['sort_by'] = sort_by
 
 suggested_substitutes = st.sidebar.slider(translate('Amount of suggested substitutes', language), 0, 30, default_values['suggested_substitutes'])
+query_params['suggested_substitutes'] = suggested_substitutes
 
 wv_topn = st.sidebar.slider(translate('Number of top-N similar keys', language), 0, 50, default_values['wv_topn'])
+query_params['wv_topn'] = wv_topn
 
 show_table = st.sidebar.checkbox(translate('Show table', language), default_values['show_table'])
+query_params['show_table'] = show_table
 
 show_images = st.sidebar.checkbox(translate('Show images', language), default_values['show_images'])
+query_params['show_images'] = show_images
 
 ## Main page content
 
@@ -184,6 +190,8 @@ st.subheader(translate('Find Ingredient Substitutions', language))
 ingredient = st.text_input("", placeholder=translate("Enter Ingredient", language), value=default_values['ingredient'])
 
 if ingredient:
+    query_params['ingredient'] = ingredient
+
     ingredient_english = translate(ingredient, language, mode="to_english")
 
     try:
@@ -232,12 +240,4 @@ if ingredient:
 
         st.image(images, width=100, caption=captions)
 
-st.experimental_set_query_params(
-    language=language,
-    sort_by=sort_by,
-    suggested_substitutes=suggested_substitutes,
-    wv_topn=wv_topn,
-    show_table=show_table,
-    show_images=show_images,
-    ingredient=ingredient
-)
+st.experimental_set_query_params(**query_params)
