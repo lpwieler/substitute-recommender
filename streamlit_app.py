@@ -21,7 +21,7 @@ simple_image = simple_image_download()
 
 translator_provider = os.getenv('GOOGLE_TRANSLATOR_PROVIDER', "cloud")
 
-print(f'Translator is configured to use google {translator_provider} translator')
+print(f'Google translator provider: {translator_provider}')
 
 multi_language_support = False
 
