@@ -6,6 +6,7 @@ import os
 import google.auth
 from gensim.models import Word2Vec
 from difflib import get_close_matches
+from dask import compute, delayed
 from libs.simple_image_download import simple_image_download
 from func_timeout import func_set_timeout, FunctionTimedOut
 from googletrans import Translator as GoogleFreeTranslator, LANGUAGES, LANGCODES
@@ -276,17 +277,12 @@ if ingredient:
 
     if show_images:
         with st.spinner(translate('Loading images...', language)):
-            progress_bar = st.progress(0)
-            progress_step = math.floor(100 / len(substitutes.index))
             images = []
             captions = substitutes[translate('ingredient', language)].to_list()
 
             for index, row in substitutes.iterrows():
-                images.append(search_image(substitutes_list[index - 1]))
-                progress_bar.progress(progress_step * index)
+                images.append(delayed(search_image, traverse=False)(substitutes_list[index - 1]))
 
-            progress_bar.empty()
-
-            st.image(images, width=100, caption=captions)
+            st.image(compute(images)[0], width=100, caption=captions)
 
 st.experimental_set_query_params(**query_params)
