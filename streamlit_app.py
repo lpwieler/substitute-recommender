@@ -33,15 +33,15 @@ multi_language_support = True if (google_cloud_translator or google_free_transla
 image_timeout = 3
 default_image = "https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png"
 
-@st.cache(allow_output_mutation=True)
+@st.cache(allow_output_mutation=True, show_spinner=False)
 def load_model(model='SRM'):
     return Word2Vec.load(f'./models/{model}.model')
 
-@st.cache()
+@st.cache(show_spinner=False)
 def load_ingredients():
     return pd.read_pickle('./data/ingredients.pkl')
 
-@st.cache()
+@st.cache(show_spinner=False)
 def create_ingredient_list(df_ingredients):
     return [x.replace(' ', '_') for x in df_ingredients['ingredient'].to_list()]
 
