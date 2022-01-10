@@ -30,7 +30,7 @@ elif google_translator_provider == 'free':
 
 multi_language_support = True if (google_cloud_translator or google_free_translator) else False
 
-image_timeout = 3
+image_search_timeout = 5
 default_image = 'https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png'
 
 @st.cache(allow_output_mutation=True, show_spinner=False)
@@ -45,7 +45,7 @@ def load_ingredients():
 def create_ingredient_list(df_ingredients):
     return [x.replace(' ', '_') for x in df_ingredients['ingredient'].to_list()]
 
-@func_set_timeout(image_timeout)
+@func_set_timeout(image_search_timeout)
 def image_url(ingredient):
     print(f'Searching image for ingredient "{ingredient}"...')
     return simple_image.urls(ingredient, 1, extensions={'.jpg'})[0]
