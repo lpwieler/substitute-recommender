@@ -169,7 +169,7 @@ default_values = {
     'suggested_substitutes': int(get_query_param('suggested_substitutes', initial_query_params, 10)),
     'wv_topn': int(get_query_param('wv_topn', initial_query_params, 30)),
     'show_table': get_query_param('show_table', initial_query_params, 'true').lower() == 'true',
-    'show_images': get_query_param('show_images', initial_query_params, 'false').lower() == 'true',
+    'show_images': get_query_param('show_images', initial_query_params, 'true').lower() == 'true',
     'ingredient': get_query_param('ingredient', initial_query_params)
 }
 
