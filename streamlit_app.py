@@ -21,6 +21,8 @@ simple_image = simple_image_download()
 
 google_translator_provider = os.getenv('GOOGLE_TRANSLATOR_PROVIDER', "cloud")
 
+google_translator_provider, google_free_translator = None, None
+
 if google_translator_provider == "cloud":
     google_cloud_translator = GoogleCloudTranslator()
 elif google_translator_provider == "free":
