@@ -1,5 +1,7 @@
 # substitute-recommender
 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://share.streamlit.io/lpwieler/substitute-recommender)
+
 Substitute Recommender Website
 
 ## Getting Started
