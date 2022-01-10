@@ -222,10 +222,10 @@ wv_topn = st.sidebar.slider(translate('Number of top-N similar keys', language),
 query_params['wv_topn'] = wv_topn
 
 show_table = st.sidebar.checkbox(translate('Show table', language), default_values['show_table'])
-query_params['show_table'] = show_table
+query_params['show_table'] = str(show_table).lower()
 
 show_images = st.sidebar.checkbox(translate('Show images', language), default_values['show_images'])
-query_params['show_images'] = show_images
+query_params['show_images'] = str(show_images).lower()
 
 ## Main page content
 
