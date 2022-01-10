@@ -40,8 +40,10 @@ def load_model(model='SRM'):
     return Word2Vec.load(f'./models/{model}.model')
 
 @st.cache()
-def load_ingredient_list():
-    return pd.read_pickle('./data/ingredient_list.pkl')
+def load_ingredients():
+    df_ingredients = pd.read_pickle('./data/ingredients.pkl')
+    ingredient_list = [x.replace(' ', '_') for x in df_ingredients['ingredient'].to_list()]
+    return (df_ingredients, ingredient_list)
 
 @func_set_timeout(image_timeout)
 def image_url(ingredient):
@@ -92,6 +94,18 @@ def translate(word, language, mode="to_language"):
 def get_query_param(key, query_params, default=""):
     return query_params[key][0] if key in query_params else default
 
+def find_ingredient(ingredient):
+    if ingredient in ingredient_list:
+        print(f'Found exact match for ingredient "{ingredient}"')
+        return ingredient
+    else:
+        matched_ingredient =  (get_close_matches(ingredient, ingredient_list, n=1, cutoff=0.8) or [None])[0]
+        if matched_ingredient:
+            print(f'Found close match "{matched_ingredient}" for ingredient "{ingredient}"')
+            return matched_ingredient
+        else:
+            raise Exception(f'Did not find close match for ingredient "{ingredient}"')
+
 def remove_same_ingredients(ingredient, substitutes_list, remove_count=3, similarity_score=0.8):
     ingredients_to_remove = get_close_matches(ingredient, substitutes_list, remove_count, similarity_score)
     cleaned_substitutes_list = [x for x in substitutes_list if x not in ingredients_to_remove]
@@ -108,7 +122,7 @@ def remove_same_substitutes(substitutes_list_without_same_ingredients):
     return cleaned_substitutes_list
 
 def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='score'):
-    ingredient = ingredient.strip().replace(' ', '_').lower()
+    ingredient = find_ingredient(ingredient.strip().replace(' ', '_').lower())
     similar_substitutes = model.wv.most_similar(ingredient, topn=wv_topn)
 
     df_substitutes = pd.DataFrame(similar_substitutes, columns = ['ingredient', 'similarity'])
@@ -125,7 +139,7 @@ def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='s
 
     df_substitutes_final = df_substitutes_index.replace('_', ' ', regex=True)
     
-    possible_substitutes = ingredient_list.merge(df_substitutes_final, on='ingredient', how='inner')
+    possible_substitutes = df_ingredients.merge(df_substitutes_final, on='ingredient', how='inner')
     possible_substitutes['score'] = possible_substitutes.apply(lambda row: round(row.frequency * 20 ** (10 * row.similarity) / 10 ** 6), axis=1)
     possible_substitutes = possible_substitutes.sort_values(by=[sort_by], ascending=False)
 
@@ -137,7 +151,7 @@ def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='s
 
 
 model = load_model()
-ingredient_list = load_ingredient_list()
+df_ingredients, ingredient_list = load_ingredients()
 
 query_params = st.experimental_get_query_params()
 
