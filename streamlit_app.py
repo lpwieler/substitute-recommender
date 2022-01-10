@@ -261,16 +261,17 @@ if ingredient:
                 inplace=True
             )
 
-        if show_images:
+    if show_images:
+        with st.spinner(translate('Loading image...', language)):
             st.image(search_image(ingredient_english), width=150)
 
-        st.subheader(translate('Recommended Substitutes', language))
+    st.subheader(translate('Recommended Substitutes', language))
 
-        if not show_table and not show_images:
-            st.info(translate('All views are disabled. Table or image view needs to be enabled to see results.', language))
+    if not show_table and not show_images:
+        st.info(translate('All views are disabled. Table or image view needs to be enabled to see results.', language))
 
-        if show_table:
-            st.table(substitutes)
+    if show_table:
+        st.table(substitutes)
 
     if show_images:
         with st.spinner(translate('Loading images...', language)):
