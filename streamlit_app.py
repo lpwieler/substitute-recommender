@@ -39,9 +39,11 @@ def load_model(model='SRM'):
 
 @st.cache()
 def load_ingredients():
-    df_ingredients = pd.read_pickle('./data/ingredients.pkl')
-    ingredient_list = [x.replace(' ', '_') for x in df_ingredients['ingredient'].to_list()]
-    return (df_ingredients, ingredient_list)
+    return pd.read_pickle('./data/ingredients.pkl')
+
+@st.cache()
+def create_ingredient_list(df_ingredients):
+    return [x.replace(' ', '_') for x in df_ingredients['ingredient'].to_list()]
 
 @func_set_timeout(image_timeout)
 def image_url(ingredient):
@@ -149,7 +151,8 @@ def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='s
 
 
 model = load_model()
-df_ingredients, ingredient_list = load_ingredients()
+df_ingredients = load_ingredients()
+ingredient_list = create_ingredient_list(df_ingredients)
 
 query_params = st.experimental_get_query_params()
 
