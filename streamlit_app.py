@@ -42,8 +42,8 @@ def load_ingredients():
     return pd.read_pickle('./data/ingredients.pkl')
 
 @st.cache()
-def load_ingredient_list():
-    return pd.read_pickle('./data/ingredient_list.pkl')
+def create_ingredient_list(df_ingredients):
+    return [x.replace(' ', '_') for x in df_ingredients['ingredient'].to_list()]
 
 @func_set_timeout(image_timeout)
 def image_url(ingredient):
@@ -95,7 +95,7 @@ def get_query_param(key, query_params, default=""):
     return query_params[key][0] if key in query_params else default
 
 def find_ingredient(ingredient):
-    ingredient_list = load_ingredient_list()
+    ingredient_list = create_ingredient_list(df_ingredients)
 
     if ingredient in ingredient_list:
         print(f'Found exact match for ingredient "{ingredient}"')
