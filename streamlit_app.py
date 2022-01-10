@@ -50,7 +50,7 @@ def image_url(ingredient):
     print(f'Searching image for ingredient "{ingredient}"...')
     return simple_image.urls(ingredient, 1, extensions={'.jpg'})[0]
 
-@st.cache()
+@st.cache(show_spinner=False)
 def search_image(ingredient):
     try:
         return image_url(ingredient)
@@ -73,7 +73,7 @@ def translate_word(word, src, dest):
     else:
         return word
 
-@st.cache()
+@st.cache(show_spinner=False)
 def translate(word, language, mode="to_language"):
     if language == LANGUAGES["en"]:
         return word
@@ -233,55 +233,57 @@ st.subheader(translate('Find Ingredient Substitutions', language))
 ingredient = st.text_input("", placeholder=translate("Enter Ingredient", language), value=default_values['ingredient'])
 
 if ingredient:
-    query_params['ingredient'] = ingredient
+    with st.spinner(translate('Searching substitutes...', language)):
+        query_params['ingredient'] = ingredient
 
-    ingredient_english = translate(ingredient, language, mode="to_english")
+        ingredient_english = translate(ingredient, language, mode="to_english")
 
-    try:
-        substitutes = find_substitute(ingredient_english, wv_topn, suggested_substitutes, sort_by)
-    except Exception as error:
-        print(f'find_substitute failed with error: {error}')
-        st.warning(translate(f'Invalid ingredient "{ingredient_english}"', language))
-        st.stop()
+        try:
+            substitutes = find_substitute(ingredient_english, wv_topn, suggested_substitutes, sort_by)
+        except Exception as error:
+            print(f'find_substitute failed with error: {error}')
+            st.warning(translate(f'Invalid ingredient "{ingredient_english}"', language))
+            st.stop()
 
-    substitutes_list = substitutes['ingredient'].to_list()
+        substitutes_list = substitutes['ingredient'].to_list()
 
-    if language != LANGUAGES["en"]:
-        substitutes['ingredient'] = substitutes['ingredient'].apply(lambda ingredient: translate(ingredient, language))
+        if language != LANGUAGES["en"]:
+            substitutes['ingredient'] = substitutes['ingredient'].apply(lambda ingredient: translate(ingredient, language))
 
-        substitutes.rename(
-            columns={
-                'ingredient': translate('ingredient', language),
-                'frequency': translate('frequency', language),
-                'similarity': translate('similarity', language),
-                'score': translate('score', language)
-            },
-            inplace=True
-        )
+            substitutes.rename(
+                columns={
+                    'ingredient': translate('ingredient', language),
+                    'frequency': translate('frequency', language),
+                    'similarity': translate('similarity', language),
+                    'score': translate('score', language)
+                },
+                inplace=True
+            )
+
+        if show_images:
+            st.image(search_image(ingredient_english), width=150)
+
+        st.subheader(translate('Recommended Substitutes', language))
+
+        if not show_table and not show_images:
+            st.info(translate('All views are disabled. Table or image view needs to be enabled to see results.', language))
+
+        if show_table:
+            st.table(substitutes)
 
     if show_images:
-        st.image(search_image(ingredient_english), width=150)
+        with st.spinner(translate('Loading images...', language)):
+            progress_bar = st.progress(0)
+            progress_step = math.floor(100 / len(substitutes.index))
+            images = []
+            captions = substitutes[translate('ingredient', language)].to_list()
 
-    st.subheader(translate('Recommended Substitutes', language))
+            for index, row in substitutes.iterrows():
+                images.append(search_image(substitutes_list[index - 1]))
+                progress_bar.progress(progress_step * index)
 
-    if not show_table and not show_images:
-        st.info(translate('All views are disabled. Table or image view needs to be enabled to see results.', language))
+            progress_bar.empty()
 
-    if show_table:
-        st.table(substitutes)
-
-    if show_images:
-        progress_bar = st.progress(0)
-        progress_step = math.floor(100 / len(substitutes.index))
-        images = []
-        captions = substitutes[translate('ingredient', language)].to_list()
-
-        for index, row in substitutes.iterrows():
-            images.append(search_image(substitutes_list[index - 1]))
-            progress_bar.progress(progress_step * index)
-
-        progress_bar.empty()
-
-        st.image(images, width=100, caption=captions)
+            st.image(images, width=100, caption=captions)
 
 st.experimental_set_query_params(**query_params)
