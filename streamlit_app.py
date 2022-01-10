@@ -243,7 +243,7 @@ if ingredient:
     try:
         substitutes = find_substitute(ingredient_english, wv_topn, suggested_substitutes, sort_by).copy(deep=True)
     except Exception as error:
-        logger.info(f'find_substitute failed with error: {error}')
+        logger.warning(f'find_substitute failed with error: {error}')
         st.warning(f'{translate("Invalid ingredient", language)} "{ingredient}"')
         st.stop()
 
