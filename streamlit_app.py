@@ -8,8 +8,8 @@ from gensim.models import Word2Vec
 from difflib import get_close_matches
 from libs.simple_image_download import simple_image_download
 from func_timeout import func_set_timeout, FunctionTimedOut
-from googletrans import Translator, LANGUAGES, LANGCODES
-from google.cloud import translate as google_translate
+from googletrans import Translator as GoogleFreeTranslator, LANGUAGES, LANGCODES
+from google.cloud.translate import TranslationServiceClient as GoogleCloudTranslator
 
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
 
@@ -21,16 +21,12 @@ simple_image = simple_image_download()
 
 google_translator_provider = os.getenv('GOOGLE_TRANSLATOR_PROVIDER', "cloud")
 
-print(f'Google translator provider: {google_translator_provider}')
-
-multi_language_support = False
-
 if google_translator_provider == "cloud":
-    google_cloud_translator = google_translate.TranslationServiceClient()
-    multi_language_support = True
+    google_cloud_translator = GoogleCloudTranslator()
 elif google_translator_provider == "free":
-    google_free_translator  = Translator()
-    multi_language_support = True
+    google_free_translator  = GoogleFreeTranslator()
+
+multi_language_support = True if (google_cloud_translator or google_free_translator) else False
 
 image_timeout = 3
 default_image = "https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png"
