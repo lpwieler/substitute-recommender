@@ -123,6 +123,7 @@ def remove_same_substitutes(substitutes_list_without_same_ingredients):
         
     return cleaned_substitutes_list
 
+@st.cache(show_spinner=False)
 def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='score'):
     ingredient = find_ingredient(ingredient.strip().replace(' ', '_').lower())
     similar_substitutes = model.wv.most_similar(ingredient, topn=wv_topn)
