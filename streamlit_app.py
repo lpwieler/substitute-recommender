@@ -11,7 +11,7 @@ from func_timeout import func_set_timeout, FunctionTimedOut
 from googletrans import Translator as GoogleFreeTranslator, LANGUAGES, LANGCODES
 from google.cloud.translate import TranslationServiceClient as GoogleCloudTranslator
 
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "key.json"
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'key.json'
 
 _, project_id = google.auth.default()
 
@@ -19,19 +19,19 @@ google_cloud_project = f'projects/{project_id}/locations/global'
 
 simple_image = simple_image_download()
 
-google_translator_provider = os.getenv('GOOGLE_TRANSLATOR_PROVIDER', "cloud")
+google_translator_provider = os.getenv('GOOGLE_TRANSLATOR_PROVIDER', 'cloud')
 
 google_cloud_translator, google_free_translator = None, None
 
-if google_translator_provider == "cloud":
+if google_translator_provider == 'cloud':
     google_cloud_translator = GoogleCloudTranslator()
-elif google_translator_provider == "free":
+elif google_translator_provider == 'free':
     google_free_translator  = GoogleFreeTranslator()
 
 multi_language_support = True if (google_cloud_translator or google_free_translator) else False
 
 image_timeout = 3
-default_image = "https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png"
+default_image = 'https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png'
 
 @st.cache(allow_output_mutation=True, show_spinner=False)
 def load_model(model='SRM'):
@@ -58,31 +58,31 @@ def search_image(ingredient):
         return default_image
 
 def translate_word(word, src, dest):
-    if google_translator_provider == "cloud":
+    if google_translator_provider == 'cloud':
         return google_cloud_translator.translate_text(
             request={
-                "parent": google_cloud_project,
-                "contents": [word],
-                "mime_type": "text/plain",
-                "source_language_code": src,
-                "target_language_code": dest
+                'parent': google_cloud_project,
+                'contents': [word],
+                'mime_type': 'text/plain',
+                'source_language_code': src,
+                'target_language_code': dest
             }
         ).translations[0].translated_text
-    elif google_translator_provider == "free":
+    elif google_translator_provider == 'free':
         return google_free_translator.translate(word, dest, src).text
     else:
         return word
 
 @st.cache(show_spinner=False)
-def translate(word, language, mode="to_language"):
-    if language == LANGUAGES["en"]:
+def translate(word, language, mode='to_language'):
+    if language == LANGUAGES['en']:
         return word
     
-    if mode == "to_language":
+    if mode == 'to_language':
         dest=LANGCODES[language]
-        src="en"
-    elif mode == "to_english":
-        dest="en"
+        src='en'
+    elif mode == 'to_english':
+        dest='en'
         src=LANGCODES[language]
     else:
         return word
@@ -91,7 +91,7 @@ def translate(word, language, mode="to_language"):
 
     return translate_word(word, src, dest)
 
-def get_query_param(key, query_params, default=""):
+def get_query_param(key, query_params, default=''):
     return query_params[key][0] if key in query_params else default
 
 def find_ingredient(ingredient):
@@ -191,7 +191,7 @@ if multi_language_support:
     language = st.sidebar.selectbox('', language_list, index=language_index)
     query_params['language'] = language
 else:
-    language = LANGUAGES["en"]
+    language = LANGUAGES['en']
 
 # Settings
 score_translated = translate('score', language)
@@ -231,12 +231,12 @@ query_params['show_images'] = show_images
 
 st.subheader(translate('Find Ingredient Substitutions', language))
 
-ingredient = st.text_input("", placeholder=translate("Enter Ingredient", language), value=default_values['ingredient'])
+ingredient = st.text_input('', placeholder=translate('Enter Ingredient', language), value=default_values['ingredient'])
 
 if ingredient:
     query_params['ingredient'] = ingredient
 
-    ingredient_english = translate(ingredient, language, mode="to_english")
+    ingredient_english = translate(ingredient, language, mode='to_english')
 
     try:
         substitutes = find_substitute(ingredient_english, wv_topn, suggested_substitutes, sort_by).copy(deep=True)
@@ -247,7 +247,7 @@ if ingredient:
 
     substitutes_list = substitutes['ingredient'].to_list()
 
-    if language != LANGUAGES["en"]:
+    if language != LANGUAGES['en']:
         substitutes['ingredient'] = substitutes['ingredient'].apply(lambda ingredient: translate(ingredient, language))
 
         substitutes.rename(
