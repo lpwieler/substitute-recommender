@@ -42,8 +42,8 @@ def load_ingredients():
     return pd.read_pickle('./data/ingredients.pkl')
 
 @st.cache()
-def create_ingredient_list(df_ingredients):
-    return [x.replace(' ', '_') for x in df_ingredients['ingredient'].to_list()]
+def load_ingredient_list():
+    return pd.read_pickle('./data/ingredient_list.pkl')
 
 @func_set_timeout(image_timeout)
 def image_url(ingredient):
@@ -152,7 +152,7 @@ def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='s
 
 model = load_model()
 df_ingredients = load_ingredients()
-ingredient_list = create_ingredient_list(df_ingredients)
+ingredient_list = load_ingredient_list()
 
 query_params = st.experimental_get_query_params()
 
