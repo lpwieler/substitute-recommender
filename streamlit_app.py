@@ -94,7 +94,9 @@ def translate(word, language, mode="to_language"):
 def get_query_param(key, query_params, default=""):
     return query_params[key][0] if key in query_params else default
 
-def find_ingredient(ingredient, ingredient_list):
+def find_ingredient(ingredient):
+    ingredient_list = load_ingredient_list()
+
     if ingredient in ingredient_list:
         print(f'Found exact match for ingredient "{ingredient}"')
         return ingredient
@@ -122,7 +124,7 @@ def remove_same_substitutes(substitutes_list_without_same_ingredients):
     return cleaned_substitutes_list
 
 def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='score'):
-    ingredient = find_ingredient(ingredient.strip().replace(' ', '_').lower(), ingredient_list)
+    ingredient = find_ingredient(ingredient.strip().replace(' ', '_').lower())
     similar_substitutes = model.wv.most_similar(ingredient, topn=wv_topn)
 
     df_substitutes = pd.DataFrame(similar_substitutes, columns = ['ingredient', 'similarity'])
@@ -152,7 +154,6 @@ def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='s
 
 model = load_model()
 df_ingredients = load_ingredients()
-ingredient_list = load_ingredient_list()
 
 query_params = st.experimental_get_query_params()
 
