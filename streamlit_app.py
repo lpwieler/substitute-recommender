@@ -11,6 +11,8 @@ from func_timeout import func_set_timeout, FunctionTimedOut
 from googletrans import Translator as GoogleFreeTranslator, LANGUAGES, LANGCODES
 from google.cloud.translate import TranslationServiceClient as GoogleCloudTranslator
 
+logger = st._LOGGER
+
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'key.json'
 
 _, project_id = google.auth.default()
@@ -47,7 +49,7 @@ def create_ingredient_list(df_ingredients):
 
 @func_set_timeout(image_search_timeout)
 def image_url(ingredient):
-    print(f'Searching image for ingredient "{ingredient}"...')
+    logger.info(f'Searching image for ingredient "{ingredient}"...')
     return simple_image.urls(ingredient, 1, extensions={'.jpg'})[0]
 
 @st.cache(show_spinner=False)
@@ -87,7 +89,7 @@ def translate(word, language, mode='to_language'):
     else:
         return word
 
-    print(f'Translating word "{word}" from {LANGUAGES[src]} to {LANGUAGES[dest]}...')
+    logger.info(f'Translating word "{word}" from {LANGUAGES[src]} to {LANGUAGES[dest]}...')
 
     return translate_word(word, src, dest)
 
@@ -98,12 +100,12 @@ def find_ingredient(ingredient):
     ingredient_list = create_ingredient_list(df_ingredients)
 
     if ingredient in ingredient_list:
-        print(f'Found exact match for ingredient "{ingredient}"')
+        logger.info(f'Found exact match for ingredient "{ingredient}"')
         return ingredient
     else:
         matched_ingredient =  (get_close_matches(ingredient, ingredient_list, n=1, cutoff=0.8) or [None])[0]
         if matched_ingredient:
-            print(f'Found close match "{matched_ingredient}" for ingredient "{ingredient}"')
+            logger.info(f'Found close match "{matched_ingredient}" for ingredient "{ingredient}"')
             return matched_ingredient
         else:
             raise Exception(f'Did not find close match for ingredient "{ingredient}"')
@@ -160,7 +162,7 @@ query_params = st.experimental_get_query_params()
 
 if 'initial_query_params' not in st.session_state:
     st.session_state['initial_query_params'] = st.experimental_get_query_params()
-    print(f'Initial query params: {st.session_state["initial_query_params"]}')
+    logger.info(f'Initial query params: {st.session_state["initial_query_params"]}')
 
 initial_query_params = st.session_state['initial_query_params']
 
@@ -241,7 +243,7 @@ if ingredient:
     try:
         substitutes = find_substitute(ingredient_english, wv_topn, suggested_substitutes, sort_by).copy(deep=True)
     except Exception as error:
-        print(f'find_substitute failed with error: {error}')
+        logger.info(f'find_substitute failed with error: {error}')
         st.warning(f'{translate("Invalid ingredient", language)} "{ingredient}"')
         st.stop()
 
