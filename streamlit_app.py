@@ -115,7 +115,7 @@ def find_ingredient(ingredient):
         logger.info(f'Found exact match for ingredient "{ingredient}"')
         return ingredient
     else:
-        matched_ingredient =  (get_close_matches(ingredient, ingredient_list, n=1, cutoff=0.8) or [None])[0]
+        matched_ingredient =  (get_close_matches(ingredient, ingredient_list, n=1, cutoff=0.85) or [None])[0]
         if matched_ingredient:
             logger.info(f'Found close match "{matched_ingredient}" for ingredient "{ingredient}"')
             return matched_ingredient
