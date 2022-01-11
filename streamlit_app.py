@@ -305,7 +305,8 @@ if ingredient:
     substitutes_list = substitutes['ingredient'].to_list()
 
     if language != LANGUAGES['en']:
-        substitutes['ingredient'] = substitutes['ingredient'].apply(lambda ingredient: translate(ingredient, language))
+        ingredient_substitutes = substitutes['ingredient'].apply(lambda ingredient: delayed(translate, traverse=False)(ingredient, language))
+        substitutes['ingredient'] = compute(ingredient_substitutes.to_list())[0]
 
         substitutes.rename(
             columns={
