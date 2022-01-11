@@ -91,17 +91,11 @@ def translate_word(word, src, dest):
         return word
 
 @st.cache(show_spinner=False)
-def translate(word, language, mode='to_language'):
-    if language == LANGUAGES['en']:
-        return word
-    
-    if mode == 'to_language':
-        dest=LANGCODES[language]
-        src='en'
-    elif mode == 'to_english':
-        dest='en'
-        src=LANGCODES[language]
-    else:
+def translate(word, language, src=None, dest=None):
+    src = src or 'en'
+    dest = dest or LANGCODES[language]
+
+    if src == dest:
         return word
 
     logger.info(f'Translating word "{word}" from {LANGUAGES[src]} to {LANGUAGES[dest]}...')
@@ -175,7 +169,7 @@ df_ingredients = load_ingredients()
 
 query_params = st.experimental_get_query_params()
 
-session = session_state.get(initial_query_params=None)
+session = session_state.get(initial_query_params=None, previous_language=None, current_values=None)
 
 if not session.initial_query_params:
     session.initial_query_params = query_params.copy()
@@ -193,22 +187,50 @@ default_values = {
 }
 
 if multi_language_support:
-    default_values['language'] = get_query_param('language', initial_query_params)
+    default_values['language'] = get_query_param('language', initial_query_params, LANGUAGES['en'])
+
+if not session.current_values:
+    session.current_values = default_values
 
 ## Sidebar content
 
 # Language
 if multi_language_support:
-    language_default = default_values['language']
+    default_language = default_values['language']
+
+    if not session.previous_language:
+        session.previous_language = default_language
+
+    previous_language = session.previous_language
+
     language_list = [(v) for _, v in LANGUAGES.items()]
     language_index = 21
 
-    if language_default:
-        if language_default in language_list:
-            language_index = language_list.index(language_default)
+    if default_language in language_list:
+        language_index = language_list.index(default_language)
 
     language = st.sidebar.selectbox('', language_list, index=language_index)
-    query_params['language'] = language
+    query_params['language'] = [language]
+    session.current_values['language'] = language
+
+    if language != previous_language:
+        current_ingredient = session.current_values['ingredient']
+
+        if current_ingredient:
+            translated_ingredient = translate(
+                current_ingredient,
+                language,
+                src=LANGCODES[previous_language],
+                dest=LANGCODES[language]
+            )
+            query_params['ingredient'] = [translated_ingredient]
+            session.current_values['ingredient'] = translated_ingredient
+    
+        default_values = session.current_values
+        session.previous_language = language
+        session.initial_query_params = query_params
+
+        st.experimental_rerun()
 else:
     language = LANGUAGES['en']
 
@@ -216,10 +238,12 @@ else:
 st.sidebar.subheader(translate('View Settings', language))
 
 show_images = st.sidebar.checkbox(translate('Show images', language), default_values['show_images'])
-query_params['show_images'] = str(show_images).lower()
+query_params['show_images'] = [str(show_images).lower()]
+session.current_values['show_images'] = show_images
 
 show_table = st.sidebar.checkbox(translate('Show table', language), default_values['show_table'])
-query_params['show_table'] = str(show_table).lower()
+query_params['show_table'] = [str(show_table).lower()]
+session.current_values['show_table'] = show_table
 
 # Parameter settings
 st.sidebar.subheader(translate('Parameter Settings', language))
@@ -243,13 +267,16 @@ if sort_by_default:
 
 sort_key = st.sidebar.selectbox(translate('Sort criteria', language),(score_translated, frequency_translated, similarity_translated), sorter_index)
 sort_by = sorter_mapping[sort_key]
-query_params['sort_by'] = sort_by
+query_params['sort_by'] = [sort_by]
+session.current_values['sort_by'] = sort_by
 
 suggested_substitutes = st.sidebar.slider(translate('Amount of suggested substitutes', language), 0, 30, default_values['suggested_substitutes'])
-query_params['suggested_substitutes'] = suggested_substitutes
+query_params['suggested_substitutes'] = [suggested_substitutes]
+session.current_values['suggested_substitutes'] = suggested_substitutes
 
 wv_topn = st.sidebar.slider(translate('Number of top-N similar keys', language), 0, 50, default_values['wv_topn'])
-query_params['wv_topn'] = wv_topn
+query_params['wv_topn'] = [wv_topn]
+session.current_values['wv_topn'] = wv_topn
 
 ## Main page content
 
@@ -258,9 +285,10 @@ st.subheader(translate('Find Ingredient Substitutions', language))
 ingredient = st.text_input('', placeholder=translate('Enter Ingredient', language), value=default_values['ingredient'])
 
 if ingredient:
-    query_params['ingredient'] = ingredient
+    query_params['ingredient'] = [ingredient]
+    session.current_values['ingredient'] = ingredient
 
-    ingredient_english = translate(ingredient, language, mode='to_english')
+    ingredient_english = translate(ingredient, language, src=LANGCODES[language], dest='en')
 
     try:
         substitutes = find_substitute(ingredient_english, wv_topn, suggested_substitutes, sort_by).copy(deep=True)
