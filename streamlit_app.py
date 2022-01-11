@@ -43,6 +43,7 @@ image_replacements = {
     'citrus': 'food citrus',
     'mace': 'food mace',
     'squash': 'food squash',
+    'raspberry': 'food raspberry',
     'sweetener': 'sugar substitute sweetener'
 }
 
