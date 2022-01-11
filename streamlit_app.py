@@ -35,6 +35,10 @@ multi_language_support = True if (google_cloud_translator or google_free_transla
 
 image_search_timeout = 5
 default_image = 'https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png'
+image_replacements = {
+    'apple': 'apple food',
+    'sweetener': 'sugar substitute sweetener'
+}
 
 @st.cache(allow_output_mutation=True, show_spinner=False)
 def load_model(model='SRM'):
@@ -51,7 +55,8 @@ def create_ingredient_list(df_ingredients):
 @func_set_timeout(image_search_timeout)
 def image_url(ingredient):
     logger.info(f'Searching image for ingredient "{ingredient}"...')
-    return simple_image.urls(ingredient, 1, extensions={'.jpg'})[0]
+    search_query = image_replacements[ingredient] if ingredient in image_replacements.keys() else ingredient
+    return simple_image.urls(search_query, 1, extensions={'.jpg'})[0]
 
 @st.cache(show_spinner=False)
 def search_image(ingredient):
