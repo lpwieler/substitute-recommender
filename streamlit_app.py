@@ -39,6 +39,7 @@ translation_replacements = {
 
 image_replacements = {
     'apple': 'food apple',
+    'mace': 'food mace',
     'squash': 'food squash',
     'sweetener': 'sugar substitute sweetener'
 }
