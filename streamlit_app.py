@@ -226,11 +226,11 @@ query_params['suggested_substitutes'] = suggested_substitutes
 wv_topn = st.sidebar.slider(translate('Number of top-N similar keys', language), 0, 50, default_values['wv_topn'])
 query_params['wv_topn'] = wv_topn
 
-show_table = st.sidebar.checkbox(translate('Show table', language), default_values['show_table'])
-query_params['show_table'] = str(show_table).lower()
-
 show_images = st.sidebar.checkbox(translate('Show images', language), default_values['show_images'])
 query_params['show_images'] = str(show_images).lower()
+
+show_table = st.sidebar.checkbox(translate('Show table', language), default_values['show_table'])
+query_params['show_table'] = str(show_table).lower()
 
 ## Main page content
 
@@ -266,7 +266,7 @@ if ingredient:
         )
 
     if show_images:
-        with st.spinner(translate('Loading image...', language)):
+        with st.spinner(translate('Loading ingredient...', language)):
             st.image(search_image(ingredient_english), width=150)
 
     st.subheader(translate('Recommended Substitutes', language))
@@ -274,11 +274,8 @@ if ingredient:
     if not show_table and not show_images:
         st.info(translate('All views are disabled. Table or image view needs to be enabled to see results.', language))
 
-    if show_table:
-        st.table(substitutes)
-
     if show_images:
-        with st.spinner(translate('Loading images...', language)):
+        with st.spinner(translate('Loading ingredients...', language)):
             images = []
             captions = substitutes[translate('ingredient', language)].to_list()
 
@@ -286,5 +283,8 @@ if ingredient:
                 images.append(delayed(search_image, traverse=False)(substitutes_list[index - 1]))
 
             st.image(compute(images)[0], width=100, caption=captions)
+
+    if show_table:
+        st.table(substitutes)
 
 st.experimental_set_query_params(**query_params)
