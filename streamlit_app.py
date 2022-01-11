@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import os
 import google.auth
+import libs.session_state as session_state
 from gensim.models import Word2Vec
 from difflib import get_close_matches
 from dask import compute, delayed
@@ -160,11 +161,13 @@ df_ingredients = load_ingredients()
 
 query_params = st.experimental_get_query_params()
 
-if 'initial_query_params' not in st.session_state:
-    st.session_state['initial_query_params'] = query_params.copy()
-    logger.info(f'Initial query params: {st.session_state["initial_query_params"]}')
+session = session_state.get(initial_query_params=None)
 
-initial_query_params = st.session_state['initial_query_params']
+if not session.initial_query_params:
+    session.initial_query_params = query_params.copy()
+    logger.info(f'Initial query params: {session.initial_query_params}')
+
+initial_query_params = session.initial_query_params
 
 default_values = {
     'sort_by': get_query_param('sort_by', initial_query_params),
