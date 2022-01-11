@@ -108,6 +108,7 @@ def translate(word, language, src=None, dest=None):
 def get_query_param(key, query_params, default=''):
     return query_params[key][0] if key in query_params else default
 
+@st.cache(show_spinner=False)
 def find_ingredient(ingredient):
     ingredient_list = create_ingredient_list(df_ingredients)
 
