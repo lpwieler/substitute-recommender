@@ -33,12 +33,17 @@ elif google_translator_provider == 'free':
 
 multi_language_support = True if (google_cloud_translator or google_free_translator) else False
 
-image_search_timeout = 5
-default_image = 'https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png'
+translation_replacements = {
+    'view settings': 'view-settings'
+}
+
 image_replacements = {
     'apple': 'apple food',
     'sweetener': 'sugar substitute sweetener'
 }
+
+image_search_timeout = 5
+default_image = 'https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png'
 
 @st.cache(allow_output_mutation=True, show_spinner=False)
 def load_model(model='SRM'):
@@ -52,10 +57,13 @@ def load_ingredients():
 def create_ingredient_list(df_ingredients):
     return [x.replace(' ', '_') for x in df_ingredients['ingredient'].to_list()]
 
+def find_replacement(word, replacements):
+    return replacements[word.lower()] if word.lower() in replacements.keys() else word
+
 @func_set_timeout(image_search_timeout)
 def image_url(ingredient):
     logger.info(f'Searching image for ingredient "{ingredient}"...')
-    search_query = image_replacements[ingredient] if ingredient in image_replacements.keys() else ingredient
+    search_query = find_replacement(ingredient, image_replacements)
     return simple_image.urls(search_query, 1, extensions={'.jpg'})[0]
 
 @st.cache(show_spinner=False)
@@ -70,14 +78,14 @@ def translate_word(word, src, dest):
         return google_cloud_translator.translate_text(
             request={
                 'parent': google_cloud_project,
-                'contents': [word],
+                'contents': [find_replacement(word, translation_replacements)],
                 'mime_type': 'text/plain',
                 'source_language_code': src,
                 'target_language_code': dest
             }
         ).translations[0].translated_text
     elif google_translator_provider == 'free':
-        return google_free_translator.translate(word, dest, src).text
+        return google_free_translator.translate(find_replacement(word, translation_replacements), dest, src).text
     else:
         return word
 
@@ -203,7 +211,18 @@ if multi_language_support:
 else:
     language = LANGUAGES['en']
 
-# Settings
+# View settings
+st.sidebar.subheader(translate('View Settings', language))
+
+show_images = st.sidebar.checkbox(translate('Show images', language), default_values['show_images'])
+query_params['show_images'] = str(show_images).lower()
+
+show_table = st.sidebar.checkbox(translate('Show table', language), default_values['show_table'])
+query_params['show_table'] = str(show_table).lower()
+
+# Parameter settings
+st.sidebar.subheader(translate('Parameter Settings', language))
+
 score_translated = translate('score', language)
 frequency_translated = translate('frequency', language)
 similarity_translated = translate('similarity', language)
@@ -230,12 +249,6 @@ query_params['suggested_substitutes'] = suggested_substitutes
 
 wv_topn = st.sidebar.slider(translate('Number of top-N similar keys', language), 0, 50, default_values['wv_topn'])
 query_params['wv_topn'] = wv_topn
-
-show_images = st.sidebar.checkbox(translate('Show images', language), default_values['show_images'])
-query_params['show_images'] = str(show_images).lower()
-
-show_table = st.sidebar.checkbox(translate('Show table', language), default_values['show_table'])
-query_params['show_table'] = str(show_table).lower()
 
 ## Main page content
 
