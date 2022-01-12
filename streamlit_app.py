@@ -51,7 +51,7 @@ image_search_timeout = 5
 default_image = 'https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png'
 
 @st.cache(allow_output_mutation=True, show_spinner=False)
-def load_model(model='SRM'):
+def load_model(model=os.getenv('MODEL', 'SRM')):
     return Word2Vec.load(f'./models/{model}.model')
 
 @st.cache(show_spinner=False)
