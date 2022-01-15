@@ -44,6 +44,7 @@ image_replacements = {
     'curacao': 'curacao drink',
     'dressing': 'salate dressing',
     'mace': 'food mace',
+    'mirin': 'mirin sauce',
     'squash': 'food squash',
     'raspberry': 'food raspberry',
     'sweetener': 'sugar substitute sweetener'
