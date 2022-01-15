@@ -158,6 +158,10 @@ def find_substitute(ingredient, wv_topn=100, suggested_substitutes=10, sort_by='
     df_substitutes_final = df_substitutes_index.replace('_', ' ', regex=True)
     
     possible_substitutes = df_ingredients.merge(df_substitutes_final, on='ingredient', how='inner')
+
+    if possible_substitutes.empty:
+        raise Exception(f'Did not find any substitutes for ingredient "{ingredient}"')
+
     possible_substitutes['score'] = possible_substitutes.apply(lambda row: round(row.frequency * 20 ** (10 * row.similarity) / 10 ** 6), axis=1)
     possible_substitutes = possible_substitutes.sort_values(by=[sort_by], ascending=False)
 
