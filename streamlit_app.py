@@ -263,13 +263,13 @@ sorter_mapping[similarity_translated] = 'similarity'
 
 sort_by_default = default_values['sort_by']
 sorter_list = list(sorter_mapping.values())
-sorter_index = 0
+sorter_index = 2
 
 if sort_by_default:
     if sort_by_default in sorter_list:
         sorter_index = sorter_list.index(sort_by_default)
 
-sort_key = st.sidebar.selectbox(translate('Sort criteria', language),(similarity_translated, score_translated, frequency_translated), sorter_index)
+sort_key = st.sidebar.selectbox(translate('Sort criteria', language), sorter_list, sorter_index)
 sort_by = sorter_mapping[sort_key]
 query_params['sort_by'] = [sort_by]
 session.current_values['sort_by'] = sort_by
