@@ -140,7 +140,7 @@ def remove_same_substitutes(substitutes_list_without_same_ingredients):
     return cleaned_substitutes_list
 
 @st.cache(show_spinner=False)
-def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='score'):
+def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='similarity'):
     similar_substitutes = model.wv.most_similar(ingredient, topn=wv_topn)
 
     df_substitutes = pd.DataFrame(similar_substitutes, columns = ['ingredient', 'similarity'])
@@ -269,7 +269,7 @@ if sort_by_default:
     if sort_by_default in sorter_list:
         sorter_index = sorter_list.index(sort_by_default)
 
-sort_key = st.sidebar.selectbox(translate('Sort criteria', language),(score_translated, frequency_translated, similarity_translated), sorter_index)
+sort_key = st.sidebar.selectbox(translate('Sort criteria', language),(similarity_translated, score_translated, frequency_translated), sorter_index)
 sort_by = sorter_mapping[sort_key]
 query_params['sort_by'] = [sort_by]
 session.current_values['sort_by'] = sort_by
