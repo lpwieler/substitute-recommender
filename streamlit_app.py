@@ -122,7 +122,7 @@ def find_ingredient(ingredient):
             logger.info(f'Found close match "{matched_ingredient}" for ingredient "{ingredient}"')
             return matched_ingredient
         else:
-            raise Exception(f'Did not find close match for ingredient "{ingredient}"')
+            return ingredient
 
 def remove_same_ingredients(ingredient, substitutes_list, remove_count=3, similarity_score=0.8):
     ingredients_to_remove = get_close_matches(ingredient, substitutes_list, remove_count, similarity_score)
