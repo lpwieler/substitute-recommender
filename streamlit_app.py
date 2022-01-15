@@ -41,6 +41,8 @@ image_replacements = {
     'apple': 'food apple',
     'blackberry': 'food blackberry',
     'citrus': 'food citrus',
+    'curacao': 'curacao drink',
+    'dressing': 'salate dressing',
     'mace': 'food mace',
     'squash': 'food squash',
     'raspberry': 'food raspberry',
