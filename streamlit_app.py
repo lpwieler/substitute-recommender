@@ -140,7 +140,7 @@ def remove_same_substitutes(substitutes_list_without_same_ingredients):
     return cleaned_substitutes_list
 
 @st.cache(show_spinner=False)
-def find_substitute(ingredient, wv_topn=30, suggested_substitutes=10, sort_by='similarity'):
+def find_substitute(ingredient, wv_topn=100, suggested_substitutes=10, sort_by='similarity'):
     similar_substitutes = model.wv.most_similar(ingredient, topn=wv_topn)
 
     df_substitutes = pd.DataFrame(similar_substitutes, columns = ['ingredient', 'similarity'])
@@ -184,7 +184,7 @@ initial_query_params = session.initial_query_params
 default_values = {
     'sort_by': get_query_param('sort_by', initial_query_params),
     'suggested_substitutes': int(get_query_param('suggested_substitutes', initial_query_params, 10)),
-    'wv_topn': int(get_query_param('wv_topn', initial_query_params, 30)),
+    'wv_topn': int(get_query_param('wv_topn', initial_query_params, 100)),
     'show_table': get_query_param('show_table', initial_query_params, 'true').lower() == 'true',
     'show_images': get_query_param('show_images', initial_query_params, 'true').lower() == 'true',
     'ingredient': get_query_param('ingredient', initial_query_params)
@@ -278,7 +278,7 @@ suggested_substitutes = st.sidebar.slider(translate('Amount of suggested substit
 query_params['suggested_substitutes'] = [suggested_substitutes]
 session.current_values['suggested_substitutes'] = suggested_substitutes
 
-wv_topn = st.sidebar.slider(translate('Number of top-N similar keys', language), 0, 50, default_values['wv_topn'])
+wv_topn = st.sidebar.slider(translate('Number of top-N similar keys', language), 0, 200, default_values['wv_topn'])
 query_params['wv_topn'] = [wv_topn]
 session.current_values['wv_topn'] = wv_topn
 
