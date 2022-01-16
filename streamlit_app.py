@@ -150,11 +150,11 @@ def remove_same_substitutes(substitutes_list):
         
     return cleaned_substitutes_list
 
-def calculate_score(frequency, similarity, score_weight):
-    return round(frequency * score_weight ** (10 * similarity) / 10 ** (score_weight / 5))
+def calculate_score(frequency, similarity, similarity_weight):
+    return round(frequency * similarity_weight ** (10 * similarity) / 10 ** (similarity_weight / 5))
 
 @st.cache(show_spinner=False)
-def find_substitutes(ingredient, wv_topn=100, suggested_substitutes=10, score_weight=20, sort_by='similarity'):
+def find_substitutes(ingredient, wv_topn=100, suggested_substitutes=10, similarity_weight=20, sort_by='similarity'):
     similar_substitutes = model.wv.most_similar(ingredient, topn=wv_topn)
 
     df_substitutes = pd.DataFrame(similar_substitutes, columns = ['ingredient', 'similarity'])
@@ -176,7 +176,7 @@ def find_substitutes(ingredient, wv_topn=100, suggested_substitutes=10, score_we
     if possible_substitutes.empty:
         raise Exception(f'Did not find any substitutes for ingredient "{ingredient}"')
 
-    possible_substitutes['score'] = possible_substitutes.apply(lambda row: calculate_score(row.frequency, row.similarity, score_weight), axis=1)
+    possible_substitutes['score'] = possible_substitutes.apply(lambda row: calculate_score(row.frequency, row.similarity, similarity_weight), axis=1)
     possible_substitutes = possible_substitutes.sort_values(by=[sort_by], ascending=False)
 
     r = len(possible_substitutes)
