@@ -9,7 +9,7 @@ Substitute Recommender Website
 Clone repository
 
 ```sh
-git@github.com:lpwieler/substitute-recommender.git
+git clone git@github.com:lpwieler/substitute-recommender.git
 ```
 
 Install packages
