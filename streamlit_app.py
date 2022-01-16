@@ -139,10 +139,10 @@ def remove_same_ingredients(ingredient, substitutes_list, remove_count=3, simila
     cleaned_substitutes_list = [x for x in substitutes_list if x not in ingredients_to_remove]
     return cleaned_substitutes_list
 
-def remove_same_substitutes(substitutes_list_without_same_ingredients):
-    cleaned_substitutes_list = substitutes_list_without_same_ingredients
+def remove_same_substitutes(substitutes_list):
+    cleaned_substitutes_list = substitutes_list
     
-    for substitute in substitutes_list_without_same_ingredients:
+    for substitute in substitutes_list:
         if substitute in cleaned_substitutes_list:
             cleaned_substitutes_list = remove_same_ingredients(substitute, cleaned_substitutes_list, remove_count=len(cleaned_substitutes_list), similarity_score=0.8)
             cleaned_substitutes_list.append(substitute)
