@@ -79,7 +79,7 @@ def image_url(ingredient):
     search_query = find_replacement(ingredient, image_replacements)
     return simple_image.urls(search_query, 1, extensions={'.jpg'})[0]
 
-@st.cache(show_spinner=False)
+@st.cache(show_spinner=False, max_entries=1000)
 def search_image(ingredient):
     try:
         return image_url(ingredient)
