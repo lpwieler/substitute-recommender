@@ -151,7 +151,7 @@ def remove_same_substitutes(substitutes_list):
     return cleaned_substitutes_list
 
 @st.cache(show_spinner=False)
-def find_substitute(ingredient, wv_topn=100, suggested_substitutes=10, sort_by='similarity'):
+def find_substitutes(ingredient, wv_topn=100, suggested_substitutes=10, sort_by='similarity'):
     similar_substitutes = model.wv.most_similar(ingredient, topn=wv_topn)
 
     df_substitutes = pd.DataFrame(similar_substitutes, columns = ['ingredient', 'similarity'])
@@ -311,7 +311,7 @@ if ingredient:
 
     try:
         ingredient_from_list = find_ingredient(ingredient_english.strip().replace(' ', '_').lower())
-        substitutes = find_substitute(ingredient_from_list, wv_topn, suggested_substitutes, sort_by).copy(deep=True)
+        substitutes = find_substitutes(ingredient_from_list, wv_topn, suggested_substitutes, sort_by).copy(deep=True)
     except Exception as error:
         logger.warning(error)
         st.warning(f'{translate("Invalid ingredient", language)} "{ingredient}"')
