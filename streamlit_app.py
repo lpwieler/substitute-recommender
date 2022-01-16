@@ -39,6 +39,7 @@ translation_replacements = {
 }
 
 image_replacements = {
+    'agave nectar': 'food agave nectar',
     'apple': 'food apple',
     'blackberry': 'food blackberry',
     'citrus': 'food citrus',
