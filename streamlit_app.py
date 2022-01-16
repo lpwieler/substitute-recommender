@@ -34,6 +34,7 @@ elif google_translator_provider == 'free':
 multi_language_support = True if (google_cloud_translator or google_free_translator) else False
 
 translation_replacements = {
+    'sort criteria': 'sort-criteria',
     'view settings': 'view-settings',
     'piment d espelette': 'piment d`espelette'
 }
