@@ -150,8 +150,11 @@ def remove_same_substitutes(substitutes_list):
         
     return cleaned_substitutes_list
 
+def calculate_score(frequency, similarity, score_weight):
+    return round(frequency * score_weight ** (10 * similarity) / 10 ** (score_weight / 5))
+
 @st.cache(show_spinner=False)
-def find_substitutes(ingredient, wv_topn=100, suggested_substitutes=10, sort_by='similarity'):
+def find_substitutes(ingredient, wv_topn=100, suggested_substitutes=10, score_weight=20, sort_by='similarity'):
     similar_substitutes = model.wv.most_similar(ingredient, topn=wv_topn)
 
     df_substitutes = pd.DataFrame(similar_substitutes, columns = ['ingredient', 'similarity'])
@@ -173,7 +176,7 @@ def find_substitutes(ingredient, wv_topn=100, suggested_substitutes=10, sort_by=
     if possible_substitutes.empty:
         raise Exception(f'Did not find any substitutes for ingredient "{ingredient}"')
 
-    possible_substitutes['score'] = possible_substitutes.apply(lambda row: round(row.frequency * 20 ** (10 * row.similarity) / 10 ** 6), axis=1)
+    possible_substitutes['score'] = possible_substitutes.apply(lambda row: calculate_score(row.frequency, row.similarity, score_weight), axis=1)
     possible_substitutes = possible_substitutes.sort_values(by=[sort_by], ascending=False)
 
     r = len(possible_substitutes)
@@ -200,6 +203,7 @@ default_values = {
     'sort_by': get_query_param('sort_by', initial_query_params),
     'suggested_substitutes': int(get_query_param('suggested_substitutes', initial_query_params, 10)),
     'wv_topn': int(get_query_param('wv_topn', initial_query_params, 100)),
+    'score_weight': int(get_query_param('score_weight', initial_query_params, 20)),
     'show_table': get_query_param('show_table', initial_query_params, 'true').lower() == 'true',
     'show_images': get_query_param('show_images', initial_query_params, 'true').lower() == 'true',
     'ingredient': get_query_param('ingredient', initial_query_params)
@@ -297,6 +301,10 @@ wv_topn = st.sidebar.slider(translate('Number of top-N similar keys', language),
 query_params['wv_topn'] = [wv_topn]
 session.current_values['wv_topn'] = wv_topn
 
+score_weight = st.sidebar.slider(translate('Score weight', language), 0, 50, default_values['score_weight'])
+query_params['score_weight'] = [score_weight]
+session.current_values['score_weight'] = score_weight
+
 ## Main page content
 
 st.subheader(translate('Find Ingredient Substitutions', language))
@@ -311,7 +319,7 @@ if ingredient:
 
     try:
         ingredient_from_list = find_ingredient(ingredient_english.strip().replace(' ', '_').lower())
-        substitutes = find_substitutes(ingredient_from_list, wv_topn, suggested_substitutes, sort_by).copy(deep=True)
+        substitutes = find_substitutes(ingredient_from_list, wv_topn, suggested_substitutes, score_weight, sort_by).copy(deep=True)
     except Exception as error:
         logger.warning(error)
         st.warning(f'{translate("Invalid ingredient", language)} "{ingredient}"')
