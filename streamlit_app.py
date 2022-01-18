@@ -54,6 +54,7 @@ image_replacements = {
     'oil': 'food oil',
     'squash': 'food squash',
     'raspberry': 'food raspberry',
+    'rocket': 'food rocket'
     'sweetener': 'sugar substitute sweetener'
 }
 
