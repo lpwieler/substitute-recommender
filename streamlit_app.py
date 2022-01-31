@@ -280,7 +280,7 @@ sorter_mapping[similarity_translated] = 'similarity'
 
 sort_by_default = default_values['sort_by']
 sorter_list = list(sorter_mapping.values())
-sorter_index = 2
+sorter_index = 1
 
 if sort_by_default:
     if sort_by_default in sorter_list:
