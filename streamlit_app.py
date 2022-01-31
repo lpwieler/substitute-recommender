@@ -58,7 +58,7 @@ image_replacements = {
     'sweetener': 'sugar substitute sweetener'
 }
 
-image_search_timeout = 5
+image_search_timeout = 60
 default_image = 'https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png'
 
 @st.cache(allow_output_mutation=True, show_spinner=False)
@@ -177,7 +177,6 @@ def find_substitutes(ingredient, wv_topn=100, suggested_substitutes=10, similari
     if possible_substitutes.empty:
         raise Exception(f'Did not find any substitutes for ingredient "{ingredient}"')
 
-    possible_substitutes['score'] = possible_substitutes.apply(lambda row: calculate_score(row.frequency, row.similarity, similarity_weight), axis=1)
     possible_substitutes = possible_substitutes.sort_values(by=[sort_by], ascending=False)
 
     r = len(possible_substitutes)
@@ -261,23 +260,21 @@ else:
 # View settings
 st.sidebar.subheader(translate('View Settings', language))
 
-show_images = st.sidebar.checkbox(translate('Show images', language), default_values['show_images'])
+show_images = st.sidebar.checkbox(translate('Show Images', language), default_values['show_images'])
 query_params['show_images'] = [str(show_images).lower()]
 session.current_values['show_images'] = show_images
 
-show_table = st.sidebar.checkbox(translate('Show table', language), default_values['show_table'])
+show_table = st.sidebar.checkbox(translate('Show Table', language), default_values['show_table'])
 query_params['show_table'] = [str(show_table).lower()]
 session.current_values['show_table'] = show_table
 
 # Parameter settings
 st.sidebar.subheader(translate('Parameter Settings', language))
 
-score_translated = translate('score', language)
 frequency_translated = translate('frequency', language)
 similarity_translated = translate('similarity', language)
 
 sorter_mapping = {}
-sorter_mapping[score_translated] = 'score'
 sorter_mapping[frequency_translated] = 'frequency'
 sorter_mapping[similarity_translated] = 'similarity'
 
@@ -289,20 +286,20 @@ if sort_by_default:
     if sort_by_default in sorter_list:
         sorter_index = sorter_list.index(sort_by_default)
 
-sort_key = st.sidebar.selectbox(translate('Sort criteria', language), (score_translated, frequency_translated, similarity_translated), sorter_index)
+sort_key = st.sidebar.selectbox(translate('Sort Criteria', language), (frequency_translated, similarity_translated), sorter_index)
 sort_by = sorter_mapping[sort_key]
 query_params['sort_by'] = [sort_by]
 session.current_values['sort_by'] = sort_by
 
-suggested_substitutes = st.sidebar.slider(translate('Amount of suggested substitutes', language), 0, 30, default_values['suggested_substitutes'])
+suggested_substitutes = st.sidebar.slider(translate('Amount of Suggested Substitutes', language), 0, 30, default_values['suggested_substitutes'])
 query_params['suggested_substitutes'] = [suggested_substitutes]
 session.current_values['suggested_substitutes'] = suggested_substitutes
 
-wv_topn = st.sidebar.slider(translate('Number of top-N similar keys', language), 0, 200, default_values['wv_topn'])
+wv_topn = 100
 query_params['wv_topn'] = [wv_topn]
 session.current_values['wv_topn'] = wv_topn
 
-similarity_weight = st.sidebar.slider(translate('Similarity weight', language), 0, 50, default_values['similarity_weight'])
+similarity_weight = 20
 query_params['similarity_weight'] = [similarity_weight]
 session.current_values['similarity_weight'] = similarity_weight
 
