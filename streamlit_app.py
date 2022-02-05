@@ -3,7 +3,6 @@ import pandas as pd
 import numpy as np
 import os
 import google.auth
-import libs.session_state as session_state
 from gensim.models import Word2Vec
 from difflib import get_close_matches
 from dask import compute, delayed
@@ -191,13 +190,11 @@ df_ingredients = load_ingredients()
 
 query_params = st.experimental_get_query_params()
 
-session = session_state.get(initial_query_params=None, previous_language=None, current_values=None)
+if 'initial_query_params' not in st.session_state:
+    st.session_state['initial_query_params'] = query_params.copy()
+    logger.info(f'Initial query params: {st.session_state["initial_query_params"]}')
 
-if not session.initial_query_params:
-    session.initial_query_params = query_params.copy()
-    logger.info(f'Initial query params: {session.initial_query_params}')
-
-initial_query_params = session.initial_query_params
+initial_query_params = st.session_state['initial_query_params']
 
 default_values = {
     'sort_by': get_query_param('sort_by', initial_query_params),
@@ -212,8 +209,8 @@ default_values = {
 if multi_language_support:
     default_values['language'] = get_query_param('language', initial_query_params, LANGUAGES['en'])
 
-if not session.current_values:
-    session.current_values = default_values
+if 'current_values' not in st.session_state:
+    st.session_state['current_values'] = default_values
 
 ## Sidebar content
 
@@ -221,10 +218,10 @@ if not session.current_values:
 if multi_language_support:
     default_language = default_values['language']
 
-    if not session.previous_language:
-        session.previous_language = default_language
+    if 'previous_language' not in st.session_state:
+        st.session_state['previous_language'] = default_language
 
-    previous_language = session.previous_language
+    previous_language = st.session_state['previous_language']
 
     language_list = [(v) for _, v in LANGUAGES.items()]
     language_index = 21
@@ -234,10 +231,10 @@ if multi_language_support:
 
     language = st.sidebar.selectbox('', language_list, index=language_index)
     query_params['language'] = [language]
-    session.current_values['language'] = language
+    st.session_state['current_values']['language'] = language
 
     if language != previous_language:
-        current_ingredient = session.current_values['ingredient']
+        current_ingredient = st.session_state['current_values']['ingredient']
 
         if current_ingredient:
             translated_ingredient = translate(
@@ -247,11 +244,11 @@ if multi_language_support:
                 dest=LANGCODES[language]
             )
             query_params['ingredient'] = [translated_ingredient]
-            session.current_values['ingredient'] = translated_ingredient
+            st.session_state['current_values']['ingredient'] = translated_ingredient
     
-        default_values = session.current_values
-        session.previous_language = language
-        session.initial_query_params = query_params
+        default_values = st.session_state['current_values']
+        st.session_state['previous_language'] = language
+        st.session_state['initial_query_params'] = query_params
 
         st.experimental_rerun()
 else:
@@ -262,11 +259,11 @@ st.sidebar.subheader(translate('View Settings', language))
 
 show_images = st.sidebar.checkbox(translate('Show Images', language), default_values['show_images'])
 query_params['show_images'] = [str(show_images).lower()]
-session.current_values['show_images'] = show_images
+st.session_state['current_values']['show_images'] = show_images
 
 show_table = st.sidebar.checkbox(translate('Show Table', language), default_values['show_table'])
 query_params['show_table'] = [str(show_table).lower()]
-session.current_values['show_table'] = show_table
+st.session_state['current_values']['show_table'] = show_table
 
 # Parameter settings
 st.sidebar.subheader(translate('Parameter Settings', language))
@@ -289,19 +286,19 @@ if sort_by_default:
 sort_key = st.sidebar.selectbox(translate('Sort Criteria', language), (frequency_translated, similarity_translated), sorter_index)
 sort_by = sorter_mapping[sort_key]
 query_params['sort_by'] = [sort_by]
-session.current_values['sort_by'] = sort_by
+st.session_state['current_values']['sort_by'] = sort_by
 
 suggested_substitutes = st.sidebar.slider(translate('Amount of Suggested Substitutes', language), 0, 30, default_values['suggested_substitutes'])
 query_params['suggested_substitutes'] = [suggested_substitutes]
-session.current_values['suggested_substitutes'] = suggested_substitutes
+st.session_state['current_values']['suggested_substitutes'] = suggested_substitutes
 
 wv_topn = 100
 query_params['wv_topn'] = [wv_topn]
-session.current_values['wv_topn'] = wv_topn
+st.session_state['current_values']['wv_topn'] = wv_topn
 
 similarity_weight = 20
 query_params['similarity_weight'] = [similarity_weight]
-session.current_values['similarity_weight'] = similarity_weight
+st.session_state['current_values']['similarity_weight'] = similarity_weight
 
 ## Main page content
 
@@ -311,7 +308,7 @@ ingredient = st.text_input('', placeholder=translate('Enter Ingredient', languag
 
 if ingredient:
     query_params['ingredient'] = [ingredient]
-    session.current_values['ingredient'] = ingredient
+    st.session_state['current_values']['ingredient'] = ingredient
 
     ingredient_english = translate(ingredient, language, src=LANGCODES[language], dest='en')
 
