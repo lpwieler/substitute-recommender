@@ -13,19 +13,35 @@ from google.cloud.translate import TranslationServiceClient as GoogleCloudTransl
 
 logger = st._LOGGER
 
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = 'key.json'
-
-_, project_id = google.auth.default()
-
-google_cloud_project = f'projects/{project_id}/locations/global'
-
 simple_image = simple_image_download()
 
+google_cloud_credentials_filename = 'credentials.json'
+
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_cloud_credentials_filename
+
 google_translator_provider = os.getenv('GOOGLE_TRANSLATOR_PROVIDER', 'cloud')
+
+@st.cache(show_spinner=False)
+def create_google_credentials(translator_provider):
+    if translator_provider == 'cloud':
+        google_cloud_credentials_data = os.getenv('GOOGLE_CREDENTIALS_DATA')
+
+        if google_cloud_credentials_data:
+            with open(google_cloud_credentials_filename, 'w') as outfile:
+                outfile.write(google_cloud_credentials_data)
+        else:
+            translator_provider = 'none'
+            logger.warning('Google Cloud credentials are not set. Translations are deactivated')
+
+    return translator_provider
+
+google_translator_provider = create_google_credentials(google_translator_provider)
 
 google_cloud_translator, google_free_translator = None, None
 
 if google_translator_provider == 'cloud':
+    _, project_id = google.auth.default()
+    google_cloud_project = f'projects/{project_id}/locations/global'
     google_cloud_translator = GoogleCloudTranslator()
 elif google_translator_provider == 'free':
     google_free_translator  = GoogleFreeTranslator()
