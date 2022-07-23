@@ -20,7 +20,7 @@ os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = google_cloud_credentials_filename
 
 google_translator_provider = os.getenv('GOOGLE_TRANSLATOR_PROVIDER', 'cloud')
 
-@st.cache(show_spinner=False)
+@st.experimental_memo(show_spinner=False)
 def create_google_credentials(translator_provider):
     if translator_provider == 'cloud':
         google_cloud_credentials_data = os.getenv('GOOGLE_CREDENTIALS_DATA')
@@ -36,7 +36,7 @@ def create_google_credentials(translator_provider):
 
 google_translator_provider = create_google_credentials(google_translator_provider)
 
-@st.cache(show_spinner=False, hash_funcs={GoogleCloudTranslator: lambda _: None, GoogleFreeTranslator: lambda _: None})
+@st.experimental_singleton(show_spinner=False)
 def instantiate_google_translator():
     google_cloud_translator, google_free_translator = None, None
     if google_translator_provider == 'cloud':
@@ -77,15 +77,15 @@ image_replacements = {
 image_search_timeout = 60
 default_image = 'https://socialistmodernism.com/wp-content/uploads/2017/07/placeholder-image.png'
 
-@st.cache(allow_output_mutation=True, show_spinner=False)
+@st.experimental_singleton(show_spinner=False)
 def load_model(model=os.getenv('MODEL', 'SRM')):
     return Word2Vec.load(f'./models/{model}.model')
 
-@st.cache(show_spinner=False)
+@st.experimental_singleton(show_spinner=False)
 def load_ingredients():
     return pd.read_pickle('./data/ingredients.pkl')
 
-@st.cache(show_spinner=False)
+@st.experimental_memo(show_spinner=False)
 def create_ingredient_list(df_ingredients):
     return [x.replace(' ', '_') for x in df_ingredients['ingredient'].to_list()]
 
@@ -98,7 +98,7 @@ def image_url(ingredient):
     search_query = find_replacement(ingredient, image_replacements)
     return simple_image.urls(search_query, 1, extensions={'.jpg'})[0]
 
-@st.cache(show_spinner=False, max_entries=1000)
+@st.experimental_memo(show_spinner=False, max_entries=1000)
 def search_image(ingredient):
     try:
         return image_url(ingredient)
@@ -121,7 +121,7 @@ def translate_word(word, src, dest):
     else:
         return word
 
-@st.cache(show_spinner=False)
+@st.experimental_memo(show_spinner=False)
 def translate(word, language, src=None, dest=None):
     src = src or 'en'
     dest = dest or LANGCODES[language]
@@ -136,7 +136,7 @@ def translate(word, language, src=None, dest=None):
 def get_query_param(key, query_params, default=''):
     return query_params[key][0] if key in query_params else default
 
-@st.cache(show_spinner=False)
+@st.experimental_memo(show_spinner=False)
 def find_ingredient(ingredient):
     ingredient_list = create_ingredient_list(df_ingredients)
 
@@ -170,7 +170,7 @@ def remove_same_substitutes(substitutes_list):
 def calculate_score(frequency, similarity, similarity_weight):
     return round(frequency * similarity_weight ** (10 * similarity) / 10 ** (similarity_weight / 5))
 
-@st.cache(show_spinner=False)
+@st.experimental_memo(show_spinner=False)
 def find_substitutes(ingredient, wv_topn=100, suggested_substitutes=10, similarity_weight=20, sort_by='similarity'):
     similar_substitutes = model.wv.most_similar(ingredient, topn=wv_topn)
 
