@@ -36,12 +36,16 @@ def create_google_credentials(translator_provider):
 
 google_translator_provider = create_google_credentials(google_translator_provider)
 
-google_cloud_translator, google_free_translator = None, None
+@st.cache(show_spinner=False, hash_funcs={GoogleCloudTranslator: lambda _: None, GoogleFreeTranslator: lambda _: None})
+def instantiate_google_translator():
+    google_cloud_translator, google_free_translator = None, None
+    if google_translator_provider == 'cloud':
+        google_cloud_translator = GoogleCloudTranslator()
+    elif google_translator_provider == 'free':
+        google_free_translator  = GoogleFreeTranslator()
+    return google_cloud_translator, google_free_translator
 
-if google_translator_provider == 'cloud':
-    google_cloud_translator = GoogleCloudTranslator()
-elif google_translator_provider == 'free':
-    google_free_translator  = GoogleFreeTranslator()
+google_cloud_translator, google_free_translator = instantiate_google_translator()
 
 multi_language_support = True if (google_cloud_translator or google_free_translator) else False
 
