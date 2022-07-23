@@ -2,7 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import os
-import google.auth
 from gensim.models import Word2Vec
 from difflib import get_close_matches
 from dask import compute, delayed
@@ -40,8 +39,6 @@ google_translator_provider = create_google_credentials(google_translator_provide
 google_cloud_translator, google_free_translator = None, None
 
 if google_translator_provider == 'cloud':
-    _, project_id = google.auth.default()
-    google_cloud_project = f'projects/{project_id}/locations/global'
     google_cloud_translator = GoogleCloudTranslator()
 elif google_translator_provider == 'free':
     google_free_translator  = GoogleFreeTranslator()
@@ -108,7 +105,7 @@ def translate_word(word, src, dest):
     if google_translator_provider == 'cloud':
         return google_cloud_translator.translate_text(
             request={
-                'parent': google_cloud_project,
+                'parent': 'projects/substitute-recommender/locations/global',
                 'contents': [find_replacement(word, translation_replacements)],
                 'mime_type': 'text/plain',
                 'source_language_code': src,
